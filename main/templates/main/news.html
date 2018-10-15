@@ -217,7 +217,7 @@
 														<p>Правительство РЛ <br><font class = "grey-text left">{{post.data}}</font></p>
 													</div>
 													<div class = "col s3 right">
-														{% if post.author.status == "moderator"%}
+														{% if profile.status == "moderator"%}
 															<form action = "." method="post">
 																{% csrf_token %}
 																<br>

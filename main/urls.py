@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'^work/$', views.work, name = 'work'),
     url(r'^news/$', views.news, name = 'news'),
     url(r'^settings/$', views.settings, name = 'news'),
+    url(r'^register/$', views.register, name = 'news'),
     url(r'^picture/$', views.picture, name = 'news'),
     url(r'^group/$', views.group, name = 'group'),
     url(r'^profile/(?P<profile_id>[0-9]+)/$', views.profile, name = 'login'),

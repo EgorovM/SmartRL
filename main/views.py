@@ -285,10 +285,53 @@ def login(request):
 					false_message = "Неправильный логин или пароль"
 			else:
 				false_message = "Неправильно введены данные"
+		if "register" in request.POST:
+			return redirect("/register")
 
 	context = {"false_message":false_message}
 
 	response = render(request, 'main/login.html',context)
+
+	return response
+
+def register(request):
+	error_message = None
+	context = {}
+
+	if request.method == "POST":
+		if "ok_button" in request.POST:
+
+			username = request.POST["username"]
+			password = request.POST["password"]
+
+			if username !='' and password !='' and len(password) < 8:
+				try:
+					user = User.objects.create_user(username = username, password = password)
+					user.save()
+
+				except IntegrityError:
+					error_message = "Не удалось зарегистрировать"
+					response = render(request, 'main/register.html',{"error_message":error_message})
+					return response
+
+				profile = Profile(user = user)
+				profile.save()      
+
+				user = authenticate(username = username, password = password)
+
+				if user is not None and user.is_active:
+					auth.login(request, user)
+					return HttpResponseRedirect("/settings")
+				else:
+					error_message = "Пользователь уже существует"
+					context["error_message"] = error_message
+			else:
+				error_message = "Поле не должно быть пустым"
+
+				response = render(request, 'main/register.html',{"error_message":error_message})
+				return response
+
+	response = render(request, 'main/register.html',context)
 
 	return response
 
