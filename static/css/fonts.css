@@ -30,21 +30,33 @@ input{
 
 }
 
+.dropdown-content{
+    overflow: visible !important;
+}
+
+
+body {
+	background-color: #fafafa;
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+ }
+ 
+ main {
+    flex: 1 0 auto;
+ }
+
 .vline{
 	border-left: 1px solid grey;
 }
 
-@media screen{
-	.handheld_mode{
-		display: none;
-	}
-	.about_image{
-		padding: 9% 0;
-	}
+.indicator{
+	height: 0;
+	color: #fff;
 }
 
 
-@media all and (max-width : 300px) {
+@media handheld {
 
 	.screen_mode {
 		display: none;
@@ -62,7 +74,6 @@ input{
 		width: 94%;
 		padding: 3%;
 		}
-		
 	a{
 		font-family: 'Open Sans', sans-serif;
 		font-size:16px;
@@ -116,3 +127,13 @@ input{
 	}
 
 }
+
+@media screen{
+	.handheld_mode{
+		display: none;
+	}
+	.about_image{
+		padding: 9% 0;
+	}
+}
+

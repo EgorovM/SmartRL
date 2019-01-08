@@ -8,23 +8,15 @@ from django 						import forms
 class Profile(models.Model):
     user      = models.OneToOneField(User)
     name      = models.CharField(max_length = 30)
-    grade     = models.CharField(max_length = 30)
-    telephone = models.CharField(max_length = 30)
-    liras     = models.IntegerField(default = 0)
-    mais      = models.IntegerField(default = 0)
-    status    = models.CharField(max_length = 30, default = "pupil")
+    score     = models.IntegerField(default = 0)
     
-    photo     = models.ImageField(upload_to = "images", default = "images/default.jpg")
-
     def __str__(self):
         return str(self.user)
 
-@python_2_unicode_compatible
-class Post(models.Model):
-	data   = models.DateTimeField('date published')
-	text   = models.TextField()
-	status = models.CharField(max_length = 30)
-	author = models.ForeignKey(Profile)
 
-	def __str__(self):
-		return str(self.data)
+class Image(models.Model):    
+    photo     = models.ImageField(upload_to = "images")
+    author    = models.CharField(max_length = 500)
+
+    def __str__(self):
+        return str(self.author)

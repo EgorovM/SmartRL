@@ -1,5 +1,5 @@
 from django.shortcuts 			import render, HttpResponseRedirect, redirect
-from .models					import Profile, Post
+from .models					import Profile, Image
 from django.utils 				import timezone
 from django.db 					import IntegrityError
 from django.core.paginator 		import Paginator, EmptyPage, PageNotAnInteger
@@ -8,14 +8,38 @@ from django.contrib.auth 		import authenticate
 from django.contrib.auth 		import logout
 from django.contrib 			import auth
 from django.utils 				import timezone
-from PIL      					import Image
+from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
 import datetime
 import json
 from io import StringIO
 import threading
+import base64
+import time
 
 AVATAR_SIZE  = (254, 169)
 PICTURE_SIZE = (500, 500)
+
+def ajax(request):
+	if request.method == 'POST': # and request.FILES['image']:
+		image_data = request.POST['image']
+		letter     = request.POST['letter']
+
+		format, imgstr = image_data.split(';base64,')
+		ext = format.split('/')[-1]
+		data = ContentFile(base64.b64decode(imgstr))
+		myfile = letter + "/" + str(request.user.profile.name) + "-"+time.strftime("%Y%m%d-%H%M%S")+"." + ext
+		fs = FileSystemStorage()
+		filename = fs.save(myfile, data)
+
+		profile = Profile.objects.get(user = request.user)
+		profile.score += 1
+		profile.save()
+
+	request = render(request, 'main/index.html')
+
+	return request
+    
 
 def resizeImage(file, size):
 	imagefile  = StringIO.StringIO(file.read())
@@ -32,38 +56,11 @@ def resizeImage(file, size):
 
 def index(request):
 	if request.user.is_authenticated():
-		is_auth = True
-		user = request.user
 		profile = request.user.profile
-
 	else:
-		is_auth = False
 		return redirect('login')
 
-	error_message = None
-
-	if request.method == "POST":
-		if "ok_button" in request.POST:
-			new_post_text = request.POST["new_post_text"]
-			if new_post_text == "":
-				error_message = "Напишите что-нибудь"
-			else:
-				post = Post()
-				post.data   = timezone.now()
-				post.text   = new_post_text
-				post.author = request.user.profile
-				post.status = "post"
-				post.save()
-
-		if "delete" in request.POST:
-			post = Post.objects.get(id = request.POST["post_id"])
-			post.delete()
-
-			return HttpResponseRedirect('.')
-
-	posts = Post.objects.filter(status = "post")[::-1]
-
-	context = {"is_auth":is_auth,"profile":profile, "posts": posts, "error_message":error_message}
+	context = {"profile": profile}
 
 	response = render(request, 'main/index.html',context)
 
@@ -184,22 +181,18 @@ def settings(request):
 		if "ok_button" in request.POST:
 			new_name  	  = request.POST["name"]
 			new_email 	  = request.POST["email"]
-			new_grade 	  = request.POST["grade"]
 			new_telephone = request.POST["telephone"]
-			new_about 	  = request.POST["about"]
 
 			profile = Profile.objects.get(user = request.user)
 
 			profile.name  	        = new_name
 			profile.user.email      = new_email
 			profile.telephone       = new_telephone
-			profile.grade 	        = new_grade
-			profile.user.first_name = new_about
 
 			profile.save()
 			profile.user.save()
 
-	response = render(request, 'main/settings.html',context)
+	response = render(request, 'main/index.html',context)
 
 	return response
 
@@ -304,27 +297,30 @@ def register(request):
 			username = request.POST["username"]
 			password = request.POST["password"]
 
-			if username !='' and password !='' and len(password) < 8:
-				try:
-					user = User.objects.create_user(username = username, password = password)
-					user.save()
-
-				except IntegrityError:
-					error_message = "Не удалось зарегистрировать"
-					response = render(request, 'main/register.html',{"error_message":error_message})
-					return response
-
-				profile = Profile(user = user)
-				profile.save()      
-
-				user = authenticate(username = username, password = password)
-
-				if user is not None and user.is_active:
-					auth.login(request, user)
-					return HttpResponseRedirect("/settings")
+			if username !='' and password !='':
+				if  len(password) < 8:
+					error_message = "Длина пароля не менее 8 символов"
 				else:
-					error_message = "Пользователь уже существует"
-					context["error_message"] = error_message
+					try:
+						user = User.objects.create_user(username = username, password = password)
+						user.save()
+
+					except IntegrityError:
+						error_message = "Не удалось зарегистрировать"
+						response = render(request, 'main/register.html',{"error_message":error_message})
+						return response
+
+					profile = Profile(user = user)
+					profile.save()      
+
+					user = authenticate(username = username, password = password)
+
+					if user is not None and user.is_active:
+						auth.login(request, user)
+						return HttpResponseRedirect("/settings")
+					else:
+						error_message = "Пользователь уже существует"
+						context["error_message"] = error_message
 			else:
 				error_message = "Поле не должно быть пустым"
 
